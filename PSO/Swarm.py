@@ -7,6 +7,8 @@ from Particle import Particle
 import matplotlib.pyplot as plt
 import matplotlib
 import matplotlib.animation as animation
+from InertiaFunction import InertiaFuc
+
 class Swarm:
     """
     Esta clase crea un swarm de n partículas. El rango de posibles valores
@@ -552,7 +554,7 @@ class Swarm:
                         # SE ACTUALIZA EL COEFICIENTE DE INERCIA
             # ------------------------------------------------------------------
             if reduce_inertia:
-                inertia = inertia_function(inertia, social_weight, cognitive_weight, n_iterations, i)
+                inertia = inertia_function(inertia, n_iterations, i)
             Swarm.move_swarm(
                self,
                inertia        = inertia,

@@ -108,9 +108,9 @@ def ejemploInercia():
     # Ejemplo optimización con una función de inercia propia
         #    Ejemplo PARA NUESTRA PROPIA FUNCION INERCIAL
         #    Los argumnentos siguientes sonestrictamente necesarios.
-        #    def NOMBRE(inertia, social_weight, cognitive_weight, n_iterations, i):
-        #        inertia = FUNCION
-        #        return inertia
+            #    def NOMBRE(inertia, n_iterations, i):
+            #        inertia = FUCTION
+            #        return inertia
     enjambre = Swarm(
                n_particles = 50,
                num_variables  = 2,
@@ -124,7 +124,7 @@ def ejemploInercia():
         n_iterations    = 250,
         inertia          = 0.729844,
         reduce_inertia    = True,
-        inertia_function =  InertiaFuc.OscillatingIW,
+        inertia_function =  InertiaFuc.Personalization(InertiaFuc.NoLinearIW, Weightmin = 0.1, Weightmax = 0.7, alpha =2),
         cognitive_weight   = 1,
         social_weight      = 2,
         early_stopping  = True,
