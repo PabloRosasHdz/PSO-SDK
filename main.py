@@ -118,13 +118,15 @@ def ejemploInercia():
                upper_limits  = [5, 5],
                verbose      = False
             )
+    #InertiaFuc.Personalization(InertiaFuc.NoLinearIW, Weightmin = 0.1, Weightmax = 0.7, alpha =2)
     enjambre.optimize(
         objective_function = funcion_objetivo,
         optimization     = "minimizar",
         n_iterations    = 250,
         inertia          = 0.729844,
         reduce_inertia    = True,
-        inertia_function =  InertiaFuc.Personalization(InertiaFuc.NoLinearIW, Weightmin = 0.1, Weightmax = 0.7, alpha =2),
+        inertia_function =  InertiaFuc.AdptiveIW,
+        adaptative_inertia = True,
         cognitive_weight   = 1,
         social_weight      = 2,
         early_stopping  = True,

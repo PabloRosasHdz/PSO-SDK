@@ -344,7 +344,7 @@ class Swarm:
             print("")
 
     def move_swarm(self, inertia, cognitive_weight, social_weight,
-                       verbose=False):
+                       verbose=False, adaptative_inertia = False, adptativeParameters = None):
         """
         Este método mueve todas las partículas del swarm.
 
@@ -373,6 +373,8 @@ class Swarm:
             self.particles[i].move_particle(
                 best_swarm_position=self.best_position,
                 inertia=inertia,
+                adaptative_inertia = False, 
+                adptativeParameters = None,
                 cognitive_weight=cognitive_weight,
                 social_weight=social_weight,
                 verbose=verbose
@@ -390,7 +392,8 @@ class Swarm:
             print("")
 
     def optimize(self, objective_function, optimization, n_iterations=100,
-                  inertia=0.729844, reduce_inertia=False, inertia_function = None, cognitive_weight=2, social_weight=2,
+                  inertia=0.729844, reduce_inertia=False, inertia_function = None, adaptative_inertia = False,
+                 cognitive_weight=2, social_weight=2,
                   early_stopping=False, stopping_rounds=None,
                   stopping_tolerance=None, verbose=False):
         """
@@ -553,11 +556,15 @@ class Swarm:
             # para la iteración actual.
                         # SE ACTUALIZA EL COEFICIENTE DE INERCIA
             # ------------------------------------------------------------------
-            if reduce_inertia:
+            if reduce_inertia and not adaptative_inertia:
                 inertia = inertia_function(inertia, n_iterations, i)
+            elif reduce_inertia and adaptative_inertia:
+                adptativeParameters = [inertia_function, n_iterations, i, self.n_particles, self.best_particle]
             Swarm.move_swarm(
                self,
                inertia        = inertia,
+               adaptative_inertia = adaptative_inertia,
+               adptativeParameters = adptativeParameters,
                cognitive_weight = cognitive_weight,
                social_weight    = social_weight,
                verbose        = False

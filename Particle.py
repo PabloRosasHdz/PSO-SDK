@@ -1,6 +1,7 @@
 import random
 import warnings
 import numpy as np
+from InertiaFunction import InertiaFuc
 
 class Particle:
     """Esta clase representa una nueva partícula con una posición inicial definida por
@@ -97,6 +98,8 @@ class Particle:
         self.best_value = None
         # Mejor posición en la que ha estado la partícula hasta el momento
         self.best_position = None
+        # Inercia de la particula
+        self.inertiaParticle = None
         
         # CONVERSIONES DE TIPO INICIALES
         # ----------------------------------------------------------------------
@@ -300,8 +303,8 @@ class Particle:
             print("Valor actual: " + str(self.value))
             print("")
 
-    def move_particle(self, best_swarm_position, inertia=0.8, cognitive_weight=2,
-                        social_weight=2, verbose=False):
+    def move_particle(self, best_swarm_position, inertia=0.8, adaptative_inertia = False, 
+                      adptativeParameters = None, cognitive_weight=2, social_weight=2, verbose=False):
         """
         Este método ejecuta el movimiento de una partícula, lo que implica
         actualizar su velocidad y posición. No se permite que la partícula
@@ -357,6 +360,9 @@ class Particle:
 
         # ACTUALIZACIÓN DE LA VELOCIDAD
         # ----------------------------------------------------------------------
+        if adaptative_inertia:
+            inertia = adptativeParameters[0](self.inertiaParticle,adptativeParameters[1],adptativeParameters[2],adptativeParameters[3],adptativeParameters[4], self.value)
+            self.inertiaParticle = inertia
         velocity_component = inertia * self.velocity
         r1 = np.random.uniform(low=0.0, high=1.0, size = len(self.velocity))
         r2 = np.random.uniform(low=0.0, high=1.0, size = len(self.velocity))

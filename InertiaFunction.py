@@ -5,6 +5,7 @@ class InertiaFuc:
     """
     Clase que incluye las estrategias para el calculo del coeficiente del peso inercial. 
     """
+    # ESTRATEGIAS NO ADAPTATIVAS Y VARIANTES EN EL TIEMPO PARA EL CONTROL DEL PESO INCERCIAL
     def RandomInertia(inertia, *args, **kwargs):
         """
         Es una función que selecciona aleatoriamente el coeficiente de inercia 
@@ -144,3 +145,74 @@ class InertiaFuc:
     #    def NOMBRE(inertia, n_iterations, i):
     #        inertia = FUCTION
     #        return inertia
+
+    #UTILS
+    def euclidean_distance(point1, point2):
+            """
+            Calcula la distancia euclidiana entre dos puntos en un espacio de múltiples dimensiones.
+
+            Argumentos:
+            point1 (list): Lista que representa las coordenadas del primer punto.
+            point2 (list): Lista que representa las coordenadas del segundo punto.
+
+            Retorna:
+            float: La distancia euclidiana entre los dos puntos.
+            """
+            if len(point1) != len(point2):
+                raise ValueError("Los puntos deben tener la misma cantidad de dimensiones.")
+            
+            squared_diff = sum((coord1 - coord2) ** 2 for coord1, coord2 in zip(point1, point2))
+            return math.sqrt(squared_diff)
+
+    # ESTRATEGIAS ADAPTATIVAS PARA EL CONTROL DEL PESO INERCIAL
+    def SelfRegulating(inertiaParticle, n_iterations, best_particle, particle, i, totalparticles, eta = 1, Weightinitial = 1.05, Weightfinal = 0.5):
+        diferenciaPeso =  (Weightinitial - Weightfinal)/n_iterations
+        if best_particle.value == particle:
+            return inertiaParticle + eta * diferenciaPeso
+        else:
+            return inertiaParticle - diferenciaPeso
+        
+    def FineGrainedIW(inertiaParticle, n_iterations, best_particle, particle, i, totalparticles, initialweight = 0.9):
+        def Cfunc(val):
+            return math.e**(-InertiaFuc.euclidean_distance(best_particle.position, particle.position)*(i/n_iterations))
+        if i == 0:
+            inertiaParticle = initialweight
+        inertia = inertiaParticle - Cfunc(inertiaParticle-0.4)
+        return inertia
+    
+    def DoubleExponentialSelfAdaptiveIW(inertiaParticle, n_iterations, best_particle, particle, i, totalparticles, initialweight = 0.9):
+        def Rfunc(t):
+            return InertiaFuc.euclidean_distance(best_particle.position, particle.position) * (n_iterations-i)/n_iterations 
+        if i == 0:
+            inertiaParticle = initialweight
+        inertia = math.e**(-math.e**-Rfunc(i))
+        return inertia
+    
+    # Basado en un Ranking, hay que crear uno y mandarlo
+    #def RankBasedIW(inertiaParticle, n_iterations, best_particle, particle, i, totalparticles, Weightmin = 0.4, Weightmax = 0.9):
+    #    inertia = Weightmin + (Weightmax - Weightmin) * (Rank_i/totalparticles)
+    #    return inertia
+
+    def AdptiveIW(inertiaParticle, n_iterations, best_particle, particle, i, totalparticles, Weightmin = 0.4, Weightmax = 0.9):
+        def Sfunc():
+            if particle.value < particle.best_value:
+                return 1
+            else:
+                return 0
+        def Pfunc():
+            return sum(Sfunc())/totalparticles
+        inertia = Weightmin + (Weightmax - Weightmin) * Pfunc()
+        return inertia
+    
+    #def ImprovedIW(inertiaParticle, n_iterations, best_particle, particle, i, totalparticles, alpha = 0.5, beta = 0.5):
+    #    def factorDifus():
+    #        return abs(particle.value-best_particle.value)/(particle.value+best_particle.value)
+    #    def factorConverg(val):
+    #        #Cambiar el 50 por el valor anterior de la particula
+    #        return abs(50-particle.value)/(50+particle.value)
+    #    inertia = 1 - abs((alpha*(1-factorConverg(i)))/((1+factorDifus())*(1+beta)))
+    #    return inertia
+
+    #def ADAPTIVE(inertiaParticle, n_iterations, best_particle, particle, i, totalparticles):
+    #    inertia = INERTIA FUCNTION
+    #    return inertia
