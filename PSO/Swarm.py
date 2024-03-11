@@ -4,7 +4,9 @@ import time
 from datetime import datetime
 import pandas as pd
 from Particle import Particle
-
+import matplotlib.pyplot as plt
+import matplotlib
+import matplotlib.animation as animation
 class Swarm:
     """
     Esta clase crea un swarm de n partículas. El rango de posibles valores
@@ -385,9 +387,8 @@ class Swarm:
             "------------")
             print("")
 
-
-    def optimize(self, objective_function, optimization, n_iterations=50,
-                  inertia=0.8, reduce_inertia=False, inertia_function = None, cognitive_weight=2, social_weight=2,
+    def optimize(self, objective_function, optimization, n_iterations=100,
+                  inertia=0.729844, reduce_inertia=False, inertia_function = None, cognitive_weight=2, social_weight=2,
                   early_stopping=False, stopping_rounds=None,
                   stopping_tolerance=None, verbose=False):
         """
@@ -402,10 +403,10 @@ class Swarm:
             si se desea maximizar o minimizar la función.
 
         n_iterations : `int` , optional
-            numero de iteraciones de optimización. (default is ``50``)
+            numero de iteraciones de optimización. (default is ``100``)
 
         inertia : `float` or `int`, optional
-            coeficiente de inercia. (default is ``0.8``)
+            coeficiente de inercia. (default is ``0.729844``)
 
         cognitive_weight : `float` or `int`, optional
             coeficiente cognitivo. (default is ``2``)
@@ -448,20 +449,19 @@ class Swarm:
         --------
         Ejemplo optimización
 
-        >>> def objective_function(x_0, x_1):
-                # Para la región acotada entre −10<=x_0<=0 y −6.5<=x_1<=0 la 
-                # función tiene múltiples mínimos locales y un único minimo 
-                # global en f(−3.1302468,−1.5821422)= −106.7645367.
-                f = np.sin(x_1)*np.exp(1-np.cos(x_0))**2 \
-                    + np.cos(x_0)*np.exp(1-np.sin(x_1))**2 \
-                    + (x_0-x_1)**2
-                return(f)
+        >>> def funcion_objetivo(x_0, x_1):
+                # La función de Ackley es una función de prueba comúnmente utilizada en la optimización global.
+                # Tiene muchas características interesantes, como múltiples mínimos locales y un único mínimo global.
+                # Esta función tiene un mínimo global en f(0,0)=0 y varios mínimos locales. 
+                term1 = -20 * np.exp(-0.2 * np.sqrt(0.5 * (x_0**2 + x_1**2)))
+                term2 = -np.exp(0.5 * (np.cos(2 * np.pi * x_0) + np.cos(2 * np.pi * x_1)))
+                return term1 + term2 + 20 + np.exp(1)
 
         >>> swarm = Swarm(
-                        n_particles = 50,
+                        n_particles = 20,
                         num_variables  = 2,
-                        lower_limits  = [-10, -6.5],
-                        upper_limits  = [0, 0],
+                        lower_limits  = [-5, -5],
+                        upper_limits  = [5, 5],
                         verbose      = False
                         )
 
@@ -469,12 +469,12 @@ class Swarm:
                 objective_function = objective_function,
                 optimization     = "minimizar",
                 n_iterations    = 250,
-                inertia          = 0.8,
+                inertia          = 0.729844,
                 reduce_inertia    = True,
                 cognitive_weight   = 1,
                 social_weight      = 2,
                 early_stopping  = True,
-                stopping_rounds    = 5,
+                stopping_rounds    = 10,
                 stopping_tolerance = 10**-3,
                 verbose          = False
             )
@@ -565,7 +565,7 @@ class Swarm:
         self.optimized = True
         self.optimization_iterations = i
         
-        # IDENTIFICACIÓN DEL MEJOR INDIVIDUO DE TO-DO EL PROCESO
+        # IDENTIFICACIÓN DEL MEJOR INDIVIDUO DEL PROCESO
         # ----------------------------------------------------------------------
         indice_valor_optimo  = np.argmin(np.array(self.best_value_history))
         self.optimal_value    = self.best_value_history[indice_valor_optimo]
@@ -588,3 +588,58 @@ class Swarm:
         print("-------------------------------------------")
         print("Duración optimización: " + str(end - start))
         print("Número de iteraciones: " + str(self.optimization_iterations))
+
+    def animatePSO(self, x_0, x_1, z):
+        """
+            Esta metodo crea un video de cualquier historial de posiciones de la particulas en 3 dimensiones.
+
+        Parameters
+        ----------
+        x_0 : `list` or `numpy.ndarray`
+            Lista o array de valores `floats` que compone la primer dimensión de la posición de la particuala i.
+        x_1 : `list` or `numpy.ndarray`
+            Lista o array de valores `floats` que compone la segunda dimensión de la posición de la particuala i.
+        z : `list` or `numpy.ndarray`
+            Lista o array de valores `floats` que compone la tercera dimensión de la posición de la particuala i.
+
+        Examples
+        --------
+        Ejemplo AnimatePSO
+
+        >>> # Contour plot función objetivo
+            x_0 = np.linspace(start = -5, stop = 5, num = 100)
+            x_1 = np.linspace(start = -5, stop = 5, num = 100)
+            x_0, x_1 = np.meshgrid(x_0, x_1)
+            z = funcion_objetivo(x_0, x_1)
+            enjambre.AnimatePSO(x_0, x_1, z)
+        """
+        def extraer_posicion(Particle):
+            posicion = Particle.position
+            return(posicion)
+
+        lista_df_temp = []
+
+        for i in np.arange(len(self.particle_history)):
+            posiciones = list(map(extraer_posicion, self.particle_history[i]))
+            df_temp = pd.DataFrame({"iteracion": i, "posicion": posiciones})
+            lista_df_temp.append(df_temp)
+
+        df_posiciones = pd.concat(lista_df_temp)
+        df_posiciones[['x_0','x_1']] = pd.DataFrame(df_posiciones["posicion"].values.tolist(),index= df_posiciones.index)
+
+        df_posiciones.head()
+        fig = plt.figure(figsize=(8,5))
+        plt.xlim(self.lower_limits[0],self.upper_limits[0])
+        plt.ylim(self.lower_limits[1],self.upper_limits[1])
+        def animate(i):
+            p2 = fig.clear()
+            plt.xlim(self.lower_limits[0],self.upper_limits[0])
+            plt.ylim(self.lower_limits[1],self.upper_limits[1]) 
+            df_posiciones_i = df_posiciones[df_posiciones["iteracion"] == i][["x_0", "x_1"]] #select data range
+            p1 = plt.contour(x_0, x_1, z, 35, cmap='RdGy')
+            p2 = plt.scatter(df_posiciones_i["x_0"], df_posiciones_i["x_1"])
+        ani = matplotlib.animation.FuncAnimation(fig, animate, repeat = True, blit = False, frames = self.optimization_iterations, cache_frame_data = False)
+        # Guardar la animación como mp4
+        Writer = animation.writers['ffmpeg']
+        writer = Writer(fps=8, bitrate=1800)
+        ani.save('animacion_pso.mp4', writer=writer)
