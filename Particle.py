@@ -100,6 +100,8 @@ class Particle:
         self.best_position = None
         # Inercia de la particula
         self.inertiaParticle = None
+        # Posición anterior de la particula
+        self.last_position = np.repeat(None, num_variables)
         
         # CONVERSIONES DE TIPO INICIALES
         # ----------------------------------------------------------------------
@@ -172,7 +174,7 @@ class Particle:
                                     self.lower_limits[i],
                                     self.upper_limits[i]
                                 )
-
+        self.last_position = self.position
         # LA VELOCIDAD INICIAL DE LA PARTÍCULA ES 0
         # ----------------------------------------------------------------------
         self.velocity = np.repeat(0, self.num_variables)
@@ -303,8 +305,10 @@ class Particle:
             print("Valor actual: " + str(self.value))
             print("")
 
-    def move_particle(self, best_swarm_position, inertia=0.8, adaptative_inertia = False, 
-                      adptativeParameters = None, cognitive_weight=2, social_weight=2, verbose=False):
+    def move_particle(self, best_swarm_position, inertia=0.729844, adaptative_inertia = False, 
+                      adptativeParameters = None, cognitive_weight_C1=2, social_weight_C2=2, 
+                      diversity_weight_C3 = None, diversity_control = None, AverageCurrentVelocity=None,  
+                      verbose=False):
         """
         Este método ejecuta el movimiento de una partícula, lo que implica
         actualizar su velocidad y posición. No se permite que la partícula
@@ -316,12 +320,19 @@ class Particle:
             mejor posición de todo el enjambre.
 
         inertia : `float`, optional
-            coeficiente de inercia. (default is 0.8)
+            coeficiente de inercia. (default is 0.729844)
 
-        cognitive_weight : `float`, optional
+        adaptative_inertia : `bool`, optional
+            Si la inercia se calcula por particula o en el coeficiente (default `False`) 
+        
+        adptativeParameters : `list`
+            Una lista de los parametros necesarios del enjambre que son inertia_function, n_iterations, i, self.n_particles, self.best_particle
+            (default `None`) 
+
+        cognitive_weight_C1 : `float`, optional
             coeficiente cognitivo. (default is 2)
 
-        social_weight : `float`, optional
+        social_weight_C2 : `float`, optional
             coeficiente social. (default is 2)
 
         verbose : `bool`, optional
@@ -350,9 +361,11 @@ class Particle:
 
         >>> part.move_particle(
                 best_swarm_position = np.array([-1000,-1000,+1000]),
+                adaptative_inertia = True,
+                adptativeParameters = [inertia_function, n_iterations, i, self.n_particles, self.best_particle],
                 inertia          = 0.8,
-                cognitive_weight   = 2,
-                social_weight      = 2,
+                cognitive_weight_C1   = 2,
+                social_weight_C2      = 2,
                 verbose          = True
                 )
        
@@ -360,15 +373,19 @@ class Particle:
 
         # ACTUALIZACIÓN DE LA VELOCIDAD
         # ----------------------------------------------------------------------
-        if adaptative_inertia:
-            inertia = adptativeParameters[0](self.inertiaParticle,adptativeParameters[1],adptativeParameters[2],adptativeParameters[3],adptativeParameters[4], self.value)
+        if adptativeParameters:
+            velocity_component = inertia * self.velocity
+        elif adaptative_inertia:
+            inertia = adptativeParameters[0](self, n_iterations = adptativeParameters[1],
+                                             best_particle = adptativeParameters[2],
+                                             i = adptativeParameters[3])
             self.inertiaParticle = inertia
         velocity_component = inertia * self.velocity
         r1 = np.random.uniform(low=0.0, high=1.0, size = len(self.velocity))
         r2 = np.random.uniform(low=0.0, high=1.0, size = len(self.velocity))
-        cognitive_component = cognitive_weight * r1 * (self.best_position \
+        cognitive_component = cognitive_weight_C1 * r1 * (self.best_position \
                                                       - self.position)
-        social_component = social_weight * r2 * (best_swarm_position \
+        social_component = social_weight_C2 * r2 * (best_swarm_position \
                                                 - self.position)
         new_velocity = velocity_component + cognitive_component \
                           + social_component
@@ -376,7 +393,14 @@ class Particle:
         
         # ACTUALIZACIÓN DE LA POSICIÓN
         # ----------------------------------------------------------------------
-        self.position = self.position + self.velocity
+        if diversity_control == None or adptativeParameters[3] == 0:
+            self.position = self.position + self.velocity
+        elif diversity_control == "RandomNoise":
+            self.position = self.position + self.velocity + diversity_weight_C3 * np.random.uniform(low=0.0, high=1.0, size = len(self.velocity))
+        elif diversity_control == "AverageOfVelocities":
+            self.position = self.position + self.velocity + diversity_weight_C3 * np.random.uniform(low=0.0, high=1.0, size = len(self.velocity)) * AverageCurrentVelocity
+        elif diversity_control == "PositionAndAverageOfVelocities":
+            self.position = self.position + self.velocity + diversity_weight_C3 * np.random.uniform(low=0.0, high=1.0, size = len(self.velocity)) * (self.position*AverageCurrentVelocity)
 
         # COMPROBAR LÍMITES
         # ----------------------------------------------------------------------
@@ -392,7 +416,7 @@ class Particle:
             if self.position[i] > self.upper_limits[i]:
                 self.position[i] = self.upper_limits[i]
                 self.velocity[i] = 0
-                
+        self.last_position = self.position   
         # INFORMACIÓN DEL PROCESO (VERBOSE)
         # ----------------------------------------------------------------------
         if verbose:
@@ -400,3 +424,4 @@ class Particle:
             print("-----------------------------")
             print("Nueva posición: " + str(self.position))
             print("") 
+        return self.position, self.velocity, self.best_position
