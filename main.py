@@ -4,23 +4,23 @@ from InertiaFunction import InertiaFuc
 import numpy as np
 import matplotlib.pyplot as plt
 import math
-#def funcion_objetivo(x_0, x_1):
-#    """
-#    La función de Ackley es una función de prueba comúnmente utilizada en la optimización global.
-#    Tiene muchas características interesantes, como múltiples mínimos locales y un único mínimo global.
-#    Esta función tiene un mínimo global en f(0,0)=0 y varios mínimos locales. 
-#    """
-#    term1 = -20 * np.exp(-0.2 * np.sqrt(0.5 * (x_0**2 + x_1**2)))
-#    term2 = -np.exp(0.5 * (np.cos(2 * np.pi * x_0) + np.cos(2 * np.pi * x_1)))
-#    return term1 + term2 + 20 + np.exp(1)
+def funcion_objetivo(x_0, x_1):
+    """
+    La función de Ackley es una función de prueba comúnmente utilizada en la optimización global.
+    Tiene muchas características interesantes, como múltiples mínimos locales y un único mínimo global.
+    Esta función tiene un mínimo global en f(0,0)=0 y varios mínimos locales. 
+    """
+    term1 = -20 * np.exp(-0.2 * np.sqrt(0.5 * (x_0**2 + x_1**2)))
+    term2 = -np.exp(0.5 * (np.cos(2 * np.pi * x_0) + np.cos(2 * np.pi * x_1)))
+    return term1 + term2 + 20 + np.exp(1)
 
-def zdt1(*args):
-    n = len(args)
-    f1 = args[0]
-    g = 1 + 9 * sum(args[1:]) / (n - 1)
-    h = 1 - np.sqrt(f1 / g)
-    f2 = g * h
-    return f1,f2
+#def zdt1(*args):
+#    n = len(args)
+#    f1 = args[0]
+#    g = 1 + 9 * sum(args[1:]) / (n - 1)
+#    h = 1 - np.sqrt(f1 / g)
+#    f2 = g * h
+#    return f1,f2
 
 def ejemploParticula():
     # Ejemplo creación partícula.
@@ -96,15 +96,15 @@ def ejemploInercia():
 
     enjambre = Swarm(
                n_particles = 50,
-               num_variables  = 30,
-               lower_limits  = [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
-               upper_limits  = [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+               num_variables  = 2,
+               lower_limits  = [-5,-5],
+               upper_limits  = [5,5],
                verbose      = False
             )
     #InertiaFuc.Personalization(InertiaFuc.NoLinearIW, Weightmin = 0.1, Weightmax = 0.7, alpha =2)
     #InertiaFuc.Personalization(InertiaFuc.DoubleExponentialSelfAdaptiveIWA, initialweight = 0.7)
     enjambre.optimize(
-        objective_function = zdt1,
+        objective_function = funcion_objetivo,
         optimization     = "minimizar",
         n_iterations    = 50,
         inertia          = 0.729844,
@@ -123,7 +123,7 @@ def ejemploInercia():
 
     # Evolución de la optimización y diversidad
     fig, axs = plt.subplots(2, 1, figsize=(10, 8))
-    #enjambre.resultados_df['mejor_valor_enjambre'].plot(ax=axs[0], label='mejor_valor_enjambre', color='green')
+    enjambre.resultados_df['mejor_valor_enjambre'].plot(ax=axs[0], label='mejor_valor_enjambre', color='green')
     enjambre.resultados_df['diversidad_posicion'].plot(ax=axs[1], label='diversidad_posicion', color='blue')
     enjambre.resultados_df['diversidad_velocidad'].plot(ax=axs[1], label='diversidad_velocidad', color='red')
     enjambre.resultados_df['diversidad_cognitiva'].plot(ax=axs[1], label='diversidad_cognitiva', color='magenta')
